@@ -1,0 +1,31 @@
+{
+  "vehicle_capacity": 50,
+  "deliveries": [
+    {"id": 0, "x": 1,  "y": 2,  "capacity": 3},
+    {"id": 1, "x": 4,  "y": 1,  "capacity": 4},
+    {"id": 2, "x": 2,  "y": 6,  "capacity": 5},
+    {"id": 3, "x": 7,  "y": 3,  "capacity": 2},
+    {"id": 4, "x": 6,  "y": 8,  "capacity": 6},
+    {"id": 5, "x": 3,  "y": 9,  "capacity": 3},
+    {"id": 6, "x": 9,  "y": 5,  "capacity": 4},
+    {"id": 7, "x": 8,  "y": 1,  "capacity": 2},
+    {"id": 8, "x": 5,  "y": 6,  "capacity": 3},
+    {"id": 9, "x": 0,  "y": 5,  "capacity": 2},
+    {"id": 10,"x": 3,  "y": 3,  "capacity": 4},
+    {"id": 11,"x": 7,  "y": 7,  "capacity": 5},
+    {"id": 12,"x": 2,  "y": 8,  "capacity": 3},
+    {"id": 13,"x": 6,  "y": 0,  "capacity": 2},
+    {"id": 14,"x": 9,  "y": 2,  "capacity": 4},
+    {"id": 15,"x": 1,  "y": 7,  "capacity": 5},
+    {"id": 16,"x": 4,  "y": 9,  "capacity": 3},
+    {"id": 17,"x": 8,  "y": 6,  "capacity": 2},
+    {"id": 18,"x": 5,  "y": 1,  "capacity": 4},
+    {"id": 19,"x": 0,  "y": 3,  "capacity": 3}
+  ],
+  "pickups": [
+    {"id": 0, "x": 5,  "y": 4,  "capacity": 6},
+    {"id": 1, "x": 10, "y": 2,  "capacity": 8},
+    {"id": 2, "x": 4,  "y": 10, "capacity": 5},
+    {"id": 3, "x": 9,  "y": 9,  "capacity": 7}
+  ]
+}
