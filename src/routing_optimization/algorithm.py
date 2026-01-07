@@ -48,6 +48,47 @@ def select_pickup(pickups: List[Pickup], depot: Depot, vehicle: Vehicle) -> Pick
     best_pickup = next(p for p in feasible_pickups if p.id == best_pickup_id)
     return best_pickup
 
+def nearest_neighbor_route(deliveries: List[Delivery], pickup: Pickup, vehicle: Vehicle, depot: Depot) -> List:
+    """
+    Constructs a route using the Nearest Neighbor heuristic with vehicle capacity constraints.
+
+    Args:
+        deliveries (List[Delivery]): A list of selected delivery events.
+        pickup (Pickup): The selected pickup event.
+        vehicle (Vehicle): The vehicle assigned to the route.
+        depot (Depot): The starting and ending point for the vehicle.
+    Returns:
+        List: A list representing the sequence of stops in the route.
+    """
+    unvisited_deliveries = deliveries.copy()
+    pickup_unvisited = True
+
+    current_load = sum(d.capacity for d in deliveries)
+    route = [depot]
+    current = depot
+
+    while unvisited_deliveries or pickup_unvisited:
+        candidates = unvisited_deliveries.copy()
+        if pickup_unvisited and current_load + pickup.capacity <= vehicle.capacity:
+            candidates.append(pickup)
+
+        next_event = min(candidates, key=lambda e: distance(current, e))
+        route.append(next_event)
+        current = next_event
+
+        if isinstance(next_event, Delivery):
+            current_load -= next_event.capacity
+            unvisited_deliveries.remove(next_event)
+        else:
+            current_load += next_event.capacity
+            pickup_unvisited = False
+
+    route.append(depot)
+    return route
+
+
+
+
 def plan_route(deliveries: List[Delivery], pickups: List[Pickup], vehicle: Vehicle, depot: Depot = Depot()) -> dict:
     """
     Plans an optimized route for a vehicle to handle deliveries and pickups starting and ending at the depot.
@@ -67,11 +108,12 @@ def plan_route(deliveries: List[Delivery], pickups: List[Pickup], vehicle: Vehic
     # Step 2: Select the pickup by ranking both distance from depot and capacity
     selected_pickup = select_pickup(pickups, depot, vehicle)
     
-    # Step 3: Construct the route starting and ending at the depot
-    route_base = [depot] + selected_deliveries + [selected_pickup] + [depot]
-    route_distance_base = route_distance(route_base)
+    # Step 3: Build a route using the Nearest Neighbor heuristic
+    nn_route = nearest_neighbor_route(selected_deliveries, selected_pickup, vehicle, depot)
+    # Step 4: 2-opt optimization to improve the route
 
-    # Step 4: Return the route details
-    result = {"total_distance": route_distance_base,
-              "route_ids": get_route_ids(route_base)}
+    # Step 5: Return the route details
+    result = {"total_distance": route_distance(nn_route),
+              "route_ids": get_route_ids(nn_route),
+              "route": nn_route}
     return result

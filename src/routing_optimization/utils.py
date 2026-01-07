@@ -30,6 +30,34 @@ def route_distance(route: list[Event]) -> float:
         total_distance += distance(route[i], route[i + 1])
     return total_distance
 
+def visualize_route(route: list[Event]) -> None:
+    """
+    Visualizes the given route using matplotlib.
+    Args:
+        route (list[Event]): A list of events representing the route.
+    """
+    import matplotlib.pyplot as plt
+
+    x_coords = [e.x for e in route]
+    y_coords = [e.y for e in route]
+
+    plt.figure(figsize=(8, 6))
+    plt.plot(x_coords, y_coords, marker='o')
+
+    for e in route:
+        if isinstance(e, Depot):
+            plt.text(e.x, e.y, 'Depot', fontsize=12, color='red', ha='right')
+        elif isinstance(e, Delivery):
+            plt.text(e.x, e.y, f'D{e.id}', fontsize=10, color='blue', ha='right')
+        elif isinstance(e, Pickup):
+            plt.text(e.x, e.y, f'P{e.id}', fontsize=10, color='green', ha='right')
+
+    plt.title('Route Visualization')
+    plt.xlabel('X Coordinate')
+    plt.ylabel('Y Coordinate')
+    plt.grid()
+    plt.show()
+
 def get_route_ids(route: list[Event]) -> list[str]:
     """
     Extracts the IDs of events in the given route.
