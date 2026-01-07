@@ -86,7 +86,51 @@ def nearest_neighbor_route(deliveries: List[Delivery], pickup: Pickup, vehicle: 
     route.append(depot)
     return route
 
+def is_route_feasible(route: List, vehicle: Vehicle) -> bool:
+    """
+    Capacity feasibility check for a route during 2-opt optimization.
+    """
 
+    load = sum(e.capacity for e in route if isinstance(e, Delivery))
+
+    for e in route:
+        if isinstance(e, Delivery):
+            load -= e.capacity
+        elif isinstance(e, Pickup):
+            # ONLY possible violation point
+            return load + e.capacity <= vehicle.capacity
+
+    return True
+
+def two_opt(route: List, vehicle: Vehicle) -> List:
+    """
+    Applies the 2-opt optimization algorithm to improve the given route.
+
+    Args:
+        route (List): The initial route to be optimized.
+        vehicle (Vehicle): The vehicle assigned to the route.
+    Returns:
+        List: The optimized route after applying 2-opt.
+    """
+    improved = True
+    best_route = route
+    best_distance = route_distance(route)
+
+    while improved:
+        improved = False
+        # i, j are the indices of the route to be reversed starting from 0
+        for i in range(len(best_route) - 3):
+            for j in range(i + 2, len(best_route) - 1):
+                new_route = best_route[:i+1] + best_route[i+1:j][::-1] + best_route[j:]
+                if is_route_feasible(new_route, vehicle):
+                    new_distance = route_distance(new_route)
+                    if new_distance < best_distance:
+                        best_route = new_route
+                        best_distance = new_distance
+                        improved = True
+        route = best_route
+
+    return best_route
 
 
 def plan_route(deliveries: List[Delivery], pickups: List[Pickup], vehicle: Vehicle, depot: Depot = Depot()) -> dict:
@@ -110,10 +154,12 @@ def plan_route(deliveries: List[Delivery], pickups: List[Pickup], vehicle: Vehic
     
     # Step 3: Build a route using the Nearest Neighbor heuristic
     nn_route = nearest_neighbor_route(selected_deliveries, selected_pickup, vehicle, depot)
+    
     # Step 4: 2-opt optimization to improve the route
+    route_2opt = two_opt(nn_route, vehicle)
 
     # Step 5: Return the route details
-    result = {"total_distance": route_distance(nn_route),
-              "route_ids": get_route_ids(nn_route),
-              "route": nn_route}
+    result = {"total_distance": route_distance(route_2opt),
+              "route_ids": get_route_ids(route_2opt),
+              "route": route_2opt}
     return result
