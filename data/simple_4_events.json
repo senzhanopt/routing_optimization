@@ -1,0 +1,11 @@
+{
+  "vehicle_capacity": 15,
+  "deliveries": [
+    {"id": 0, "x": 1, "y": 2, "capacity": 5},
+    {"id": 1, "x": 4, "y": 1, "capacity": 3}
+  ],
+  "pickups": [
+    {"id": 0, "x": 3, "y": 5, "capacity": 8},
+    {"id": 1, "x": 6, "y": 2, "capacity": 4}
+  ]
+}
