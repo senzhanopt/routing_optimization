@@ -1,8 +1,10 @@
-import math
 import json
-from typing import List, Tuple
+import math
 from pathlib import Path
-from routing_optimization.models import Event, Delivery, Pickup, Depot, Vehicle
+from typing import List, Tuple
+
+from routing_optimization.models import Delivery, Depot, Event, Pickup, Vehicle
+
 
 def distance(a: Event, b: Event) -> float:
     """
@@ -14,6 +16,7 @@ def distance(a: Event, b: Event) -> float:
         float: The Euclidean distance between the two events.
     """
     return math.hypot(a.x - b.x, a.y - b.y)
+
 
 def route_distance(route: list[Event]) -> float:
     """
@@ -30,6 +33,7 @@ def route_distance(route: list[Event]) -> float:
         total_distance += distance(route[i], route[i + 1])
     return total_distance
 
+
 def visualize_route(route: list[Event]) -> None:
     """
     Visualizes the given route using matplotlib.
@@ -42,21 +46,22 @@ def visualize_route(route: list[Event]) -> None:
     y_coords = [e.y for e in route]
 
     plt.figure(figsize=(8, 6))
-    plt.plot(x_coords, y_coords, marker='o')
+    plt.plot(x_coords, y_coords, marker="o")
 
     for e in route:
         if isinstance(e, Depot):
-            plt.text(e.x, e.y, 'Depot', fontsize=12, color='red', ha='right')
+            plt.text(e.x, e.y, "Depot", fontsize=12, color="red", ha="right")
         elif isinstance(e, Delivery):
-            plt.text(e.x, e.y, f'D{e.id}', fontsize=10, color='blue', ha='right')
+            plt.text(e.x, e.y, f"D{e.id}", fontsize=10, color="blue", ha="right")
         elif isinstance(e, Pickup):
-            plt.text(e.x, e.y, f'P{e.id}', fontsize=10, color='green', ha='right')
+            plt.text(e.x, e.y, f"P{e.id}", fontsize=10, color="green", ha="right")
 
-    plt.title('Route Visualization')
-    plt.xlabel('X Coordinate')
-    plt.ylabel('Y Coordinate')
+    plt.title("Route Visualization")
+    plt.xlabel("X Coordinate")
+    plt.ylabel("Y Coordinate")
     plt.grid()
     plt.show()
+
 
 def get_route_ids(route: list[Event]) -> list[str]:
     """
@@ -76,6 +81,7 @@ def get_route_ids(route: list[Event]) -> list[str]:
         else:  # Depot
             route_ids.append("Depot")
     return route_ids
+
 
 def load_input(path: Path) -> Tuple[List[Delivery], List[Pickup], Vehicle, Depot]:
     """

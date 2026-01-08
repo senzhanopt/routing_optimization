@@ -1,6 +1,8 @@
-from routing_optimization.models import Delivery, Pickup, Vehicle, Depot
-from routing_optimization.utils import distance, route_distance, get_route_ids
 from typing import List
+
+from routing_optimization.models import Delivery, Depot, Pickup, Vehicle
+from routing_optimization.utils import distance, get_route_ids, route_distance
+
 
 def select_deliveries(deliveries: List[Delivery], vehicle: Vehicle) -> List[Delivery]:
     """
@@ -23,6 +25,7 @@ def select_deliveries(deliveries: List[Delivery], vehicle: Vehicle) -> List[Deli
             break
     return selected_deliveries
 
+
 def select_pickup(pickups: List[Pickup], depot: Depot, vehicle: Vehicle) -> Pickup:
     """
     Selects the best pickup based on distance from depot and capacity.
@@ -42,7 +45,9 @@ def select_pickup(pickups: List[Pickup], depot: Depot, vehicle: Vehicle) -> Pick
     # Combine rankings
     distance_rank = {p.id: rank for rank, p in enumerate(distance_sorted)}
     capacity_rank = {p.id: rank for rank, p in enumerate(capacity_sorted)}
-    combined_rank = {p.id: distance_rank[p.id] + capacity_rank[p.id] for p in feasible_pickups}
+    combined_rank = {
+        p.id: distance_rank[p.id] + capacity_rank[p.id] for p in feasible_pickups
+    }
     # Select pickup with the best combined rank
     if not combined_rank:
         raise ValueError("No feasible pickups available within vehicle capacity.")
@@ -50,7 +55,10 @@ def select_pickup(pickups: List[Pickup], depot: Depot, vehicle: Vehicle) -> Pick
     best_pickup = next(p for p in feasible_pickups if p.id == best_pickup_id)
     return best_pickup
 
-def nearest_neighbor_route(deliveries: List[Delivery], pickup: Pickup, vehicle: Vehicle, depot: Depot) -> List:
+
+def nearest_neighbor_route(
+    deliveries: List[Delivery], pickup: Pickup, vehicle: Vehicle, depot: Depot
+) -> List:
     """
     Constructs a route using the Nearest Neighbor heuristic with vehicle capacity constraints.
 
@@ -88,6 +96,7 @@ def nearest_neighbor_route(deliveries: List[Delivery], pickup: Pickup, vehicle: 
     route.append(depot)
     return route
 
+
 def is_route_feasible(route: List, vehicle: Vehicle) -> bool:
     """
     Capacity feasibility check for a route during 2-opt optimization.
@@ -103,6 +112,7 @@ def is_route_feasible(route: List, vehicle: Vehicle) -> bool:
             return load + e.capacity <= vehicle.capacity
 
     return True
+
 
 def two_opt(route: List, vehicle: Vehicle) -> List:
     """
@@ -124,7 +134,11 @@ def two_opt(route: List, vehicle: Vehicle) -> List:
         # i, j are the indices of the route to be reversed starting from 0
         for i in range(n - 2):
             for j in range(i + 2, n):
-                new_route = best_route[:i+1] + best_route[i+1:j+1][::-1] + best_route[j+1:]
+                new_route = (
+                    best_route[: i + 1]
+                    + best_route[i + 1 : j + 1][::-1]
+                    + best_route[j + 1 :]
+                )
                 if is_route_feasible(new_route, vehicle):
                     new_distance = route_distance(new_route)
                     if new_distance < best_distance:
@@ -133,6 +147,7 @@ def two_opt(route: List, vehicle: Vehicle) -> List:
                         improved = True
 
     return best_route
+
 
 def three_opt(route: List, vehicle: Vehicle) -> List:
     """
@@ -156,10 +171,10 @@ def three_opt(route: List, vehicle: Vehicle) -> List:
             for j in range(i + 2, n - 2):
                 for k in range(j + 2, n):
                     # Generate all 7 possible 3-opt reconnections
-                    segment1 = best_route[:i+1]
-                    segment2 = best_route[i+1:j+1]
-                    segment3 = best_route[j+1:k+1]
-                    segment4 = best_route[k+1:]
+                    segment1 = best_route[: i + 1]
+                    segment2 = best_route[i + 1 : j + 1]
+                    segment3 = best_route[j + 1 : k + 1]
+                    segment4 = best_route[k + 1 :]
                     segments = [
                         segment1 + segment2[::-1] + segment3 + segment4,  # Case 1
                         segment1 + segment2 + segment3[::-1] + segment4,  # Case 2
@@ -169,7 +184,7 @@ def three_opt(route: List, vehicle: Vehicle) -> List:
                         segment1 + segment3 + segment2[::-1] + segment4,  # Case 6
                         segment1 + segment3[::-1] + segment2[::-1] + segment4,  # Case 7
                     ]
-                    
+
                     for new_route in segments:
                         if is_route_feasible(new_route, vehicle):
                             new_distance = route_distance(new_route)
@@ -181,8 +196,12 @@ def three_opt(route: List, vehicle: Vehicle) -> List:
     return best_route
 
 
-
-def plan_route(deliveries: List[Delivery], pickups: List[Pickup], vehicle: Vehicle, depot: Depot = Depot()) -> dict:
+def plan_route(
+    deliveries: List[Delivery],
+    pickups: List[Pickup],
+    vehicle: Vehicle,
+    depot: Depot = Depot(),
+) -> dict:
     """
     Plans an optimized route for a vehicle to handle deliveries and pickups starting and ending at the depot.
 
@@ -197,23 +216,27 @@ def plan_route(deliveries: List[Delivery], pickups: List[Pickup], vehicle: Vehic
 
     # Step 1: Sort deliveries based on capacity in ascending order and greedily add deliveries
     selected_deliveries = select_deliveries(deliveries, vehicle)
-    
+
     # Step 2: Select the pickup by ranking both distance from depot and capacity
     selected_pickup = select_pickup(pickups, depot, vehicle)
-    
+
     # Step 3: Build a route using the Nearest Neighbor heuristic
-    nn_route = nearest_neighbor_route(selected_deliveries, selected_pickup, vehicle, depot)
-    
+    nn_route = nearest_neighbor_route(
+        selected_deliveries, selected_pickup, vehicle, depot
+    )
+
     # Step 4: 2-opt/3-opt optimization to improve the route
-    if len(nn_route) >= 4: # Minimum length for 2-opt
+    if len(nn_route) >= 4:  # Minimum length for 2-opt
         route_opt = two_opt(nn_route, vehicle)
-        if len(route_opt) >= 6: # Minimum length for 3-opt
+        if len(route_opt) >= 6:  # Minimum length for 3-opt
             route_opt = three_opt(route_opt, vehicle)
     else:
         route_opt = nn_route
 
     # Step 5: Return the route details
-    result = {"total_distance": route_distance(route_opt),
-              "route_ids": get_route_ids(route_opt),
-              "route": route_opt}
+    result = {
+        "total_distance": route_distance(route_opt),
+        "route_ids": get_route_ids(route_opt),
+        "route": route_opt,
+    }
     return result

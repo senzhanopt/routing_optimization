@@ -1,9 +1,12 @@
-from routing_optimization.algorithm import plan_route
 from pathlib import Path
-from routing_optimization.utils import load_input
+
 import typer
 
+from routing_optimization.algorithm import plan_route
+from routing_optimization.utils import load_input
+
 app = typer.Typer()
+
 
 def plan_route_from_file(path: Path) -> dict:
     """
@@ -35,7 +38,8 @@ def main(path: Path) -> None:
 
     typer.echo(f"Total Distance: {route_info['total_distance']:.2f}\n")
     typer.echo("Route IDs:")
-    typer.echo(" -> ".join(route_info['route_ids']))
+    typer.echo(" -> ".join(route_info["route_ids"]))
+
 
 if __name__ == "__main__":
     app()

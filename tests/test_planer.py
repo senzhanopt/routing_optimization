@@ -1,5 +1,10 @@
-from routing_optimization.models import Delivery, Pickup, Vehicle, Depot
-from routing_optimization.algorithm import select_deliveries, select_pickup, is_route_feasible
+from routing_optimization.algorithm import (
+    is_route_feasible,
+    select_deliveries,
+    select_pickup,
+)
+from routing_optimization.models import Delivery, Depot, Pickup, Vehicle
+
 
 def test_select_deliveries():
     deliveries = [
@@ -13,6 +18,7 @@ def test_select_deliveries():
 
     assert len(selected) == 2
     assert sum(d.capacity for d in selected) == 4
+
 
 def test_select_pickup():
     depot = Depot()
@@ -29,6 +35,7 @@ def test_select_pickup():
     assert pickup.id == 1
     assert pickup.capacity == 2
 
+
 def test_feasible_route():
     vehicle = Vehicle(capacity=5)
     depot = Depot()
@@ -39,6 +46,7 @@ def test_feasible_route():
     route = [depot, d1, d2, p1, depot]
 
     assert is_route_feasible(route, vehicle) is True
+
 
 def test_infeasible_route():
     vehicle = Vehicle(capacity=4)
