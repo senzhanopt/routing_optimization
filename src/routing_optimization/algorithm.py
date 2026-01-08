@@ -44,6 +44,8 @@ def select_pickup(pickups: List[Pickup], depot: Depot, vehicle: Vehicle) -> Pick
     capacity_rank = {p.id: rank for rank, p in enumerate(capacity_sorted)}
     combined_rank = {p.id: distance_rank[p.id] + capacity_rank[p.id] for p in feasible_pickups}
     # Select pickup with the best combined rank
+    if not combined_rank:
+        raise ValueError("No feasible pickups available within vehicle capacity.")
     best_pickup_id = min(combined_rank, key=combined_rank.get)
     best_pickup = next(p for p in feasible_pickups if p.id == best_pickup_id)
     return best_pickup
@@ -113,24 +115,71 @@ def two_opt(route: List, vehicle: Vehicle) -> List:
         List: The optimized route after applying 2-opt.
     """
     improved = True
-    best_route = route
+    best_route = route.copy()
     best_distance = route_distance(route)
+    n = len(best_route) - 1
 
     while improved:
         improved = False
         # i, j are the indices of the route to be reversed starting from 0
-        for i in range(len(best_route) - 3):
-            for j in range(i + 2, len(best_route) - 1):
-                new_route = best_route[:i+1] + best_route[i+1:j][::-1] + best_route[j:]
+        for i in range(n - 2):
+            for j in range(i + 2, n):
+                new_route = best_route[:i+1] + best_route[i+1:j+1][::-1] + best_route[j+1:]
                 if is_route_feasible(new_route, vehicle):
                     new_distance = route_distance(new_route)
                     if new_distance < best_distance:
                         best_route = new_route
                         best_distance = new_distance
                         improved = True
-        route = best_route
 
     return best_route
+
+def three_opt(route: List, vehicle: Vehicle) -> List:
+    """
+    Applies the 3-opt optimization algorithm to improve the given route.
+
+    Args:
+        route (List): The initial route to be optimized.
+        vehicle (Vehicle): The vehicle assigned to the route.
+    Returns:
+        List: The optimized route after applying 3-opt.
+    """
+    improved = True
+    best_route = route.copy()
+    best_distance = route_distance(route)
+    n = len(best_route) - 1
+
+    while improved:
+        improved = False
+        # Iterate through all triplets of edges (i, j, k)
+        for i in range(n - 4):
+            for j in range(i + 2, n - 2):
+                for k in range(j + 2, n):
+                    # Generate all 7 possible 3-opt reconnections
+                    segment1 = best_route[:i+1]
+                    segment2 = best_route[i+1:j+1]
+                    segment3 = best_route[j+1:k+1]
+                    segment4 = best_route[k+1:]
+                    segments = [
+                        segment1 + segment2[::-1] + segment3 + segment4,  # Case 1
+                        segment1 + segment2 + segment3[::-1] + segment4,  # Case 2
+                        segment1 + segment2[::-1] + segment3[::-1] + segment4,  # Case 3
+                        segment1 + segment3 + segment2 + segment4,  # Case 4
+                        segment1 + segment3[::-1] + segment2 + segment4,  # Case 5
+                        segment1 + segment3 + segment2[::-1] + segment4,  # Case 6
+                        segment1 + segment3[::-1] + segment2[::-1] + segment4,  # Case 7
+                    ]
+                    
+                    for new_route in segments:
+                        if is_route_feasible(new_route, vehicle):
+                            new_distance = route_distance(new_route)
+                            if new_distance < best_distance:
+                                best_route = new_route
+                                best_distance = new_distance
+                                improved = True
+
+    return best_route
+
 
 
 def plan_route(deliveries: List[Delivery], pickups: List[Pickup], vehicle: Vehicle, depot: Depot = Depot()) -> dict:
@@ -155,11 +204,16 @@ def plan_route(deliveries: List[Delivery], pickups: List[Pickup], vehicle: Vehic
     # Step 3: Build a route using the Nearest Neighbor heuristic
     nn_route = nearest_neighbor_route(selected_deliveries, selected_pickup, vehicle, depot)
     
-    # Step 4: 2-opt optimization to improve the route
-    route_2opt = two_opt(nn_route, vehicle)
+    # Step 4: 2-opt/3-opt optimization to improve the route
+    if len(nn_route) >= 4: # Minimum length for 2-opt
+        route_opt = two_opt(nn_route, vehicle)
+        if len(route_opt) >= 6: # Minimum length for 3-opt
+            route_opt = three_opt(route_opt, vehicle)
+    else:
+        route_opt = nn_route
 
     # Step 5: Return the route details
-    result = {"total_distance": route_distance(route_2opt),
-              "route_ids": get_route_ids(route_2opt),
-              "route": route_2opt}
+    result = {"total_distance": route_distance(route_opt),
+              "route_ids": get_route_ids(route_opt),
+              "route": route_opt}
     return result
